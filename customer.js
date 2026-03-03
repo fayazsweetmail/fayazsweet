@@ -410,8 +410,10 @@ class CustomerOrderApp {
         const custCard = document.getElementById('customization-card');
         const sweetsTypeCont = document.getElementById('sweets-type-container');
 
-        const isXonca = cat.includes('xonça') || cat.includes('xonca');
-        const isSweets = cat.includes('sirniyyat') || cat.includes('şirniyyat');
+        // Unicode fərqlərini nəzərə alaraq dəqiq yoxlama
+        const isXonca = cat.includes('xonca') || cat.includes('xonça');
+        const isSweets = (cat === 'sirniyyat'); // Yalnız ədəd/kq olan şirniyyatlar
+        const isCake = (cat === 'şirniyyat') || (cat === 'tort') || (!isXonca && !isSweets);
 
         // Reset visibility
         if (pGroup) pGroup.style.display = 'none';
@@ -419,6 +421,8 @@ class CustomerOrderApp {
         if (pkgContainer) pkgContainer.style.display = 'none';
         if (sweetsTypeCont) sweetsTypeCont.style.display = 'none';
         if (custCard) custCard.style.display = 'block';
+        if (wLabel) wLabel.textContent = "Çəki (kg):";
+        if (wInput) wInput.step = "0.01";
 
         if (isXonca) {
             if (wLabel) wLabel.textContent = "Ədəd sayı:";
@@ -428,6 +432,7 @@ class CustomerOrderApp {
         } else if (isSweets) {
             if (sweetsTypeCont) sweetsTypeCont.style.display = 'block';
             if (custCard) custCard.style.display = 'none';
+            if (relationInfo) relationInfo.style.display = 'block';
             
             // Check selected unit type (kg vs ed)
             const unitType = document.querySelector('input[name="sweets-unit"]:checked')?.value || "kg";
@@ -572,6 +577,7 @@ class CustomerOrderApp {
         catRadios.forEach(radio => {
             radio.onchange = (e) => {
                 this.currentCategory = e.target.value;
+                this.selectedCake = null; // Kateqoriya dəyişdikdə seçimi sıfırla
                 this.renderCakeList(); // Update dropdown
                 this.renderCakesGrid(); // Update grid
                 this.updateUiForCategory(); // Update UI fields immediately

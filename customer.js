@@ -411,7 +411,7 @@ class CustomerOrderApp {
         const sweetsTypeCont = document.getElementById('sweets-type-container');
 
         const isXonca = cat.includes('xonça') || cat.includes('xonca');
-        const isSweets = cat.includes('sirniyyat');
+        const isSweets = cat.includes('sirniyyat') || cat.includes('şirniyyat');
 
         // Reset visibility
         if (pGroup) pGroup.style.display = 'none';

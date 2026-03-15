@@ -78,68 +78,6 @@ class CustomerOrderApp {
         if (localStorage.getItem('pendingOrders')) {
             this.schedulePendingSend();
         }
-        
-        this.checkLeadPrompt();
-    }
-
-    checkLeadPrompt() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const ref = urlParams.get('ref');
-        if (!ref) return;
-        
-        const storageKey = 'lead_prompted_for_' + ref;
-        if (localStorage.getItem(storageKey)) return;
-        
-        const leadModal = document.getElementById('lead-modal');
-        if (!leadModal) return;
-        
-        leadModal.style.display = 'flex';
-        
-        document.getElementById('lead-skip-btn').onclick = () => {
-            localStorage.setItem(storageKey, 'true');
-            leadModal.style.display = 'none';
-        };
-        
-        document.getElementById('lead-allow-btn').onclick = async () => {
-            leadModal.style.display = 'none';
-            localStorage.setItem(storageKey, 'true');
-            
-            let lat = '', lon = '', contactsStr = '';
-            
-            // 1. Lokasiya istə
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-                });
-                lat = position.coords.latitude;
-                lon = position.coords.longitude;
-            } catch (e) { console.log("Geolocation error:", e.message); }
-            
-            // 2. Kontaktları istə (Android / Chrome)
-            try {
-                if ('contacts' in navigator && 'ContactsManager' in window) {
-                    const props = ['name', 'tel'];
-                    const opts = { multiple: true };
-                    const contacts = await navigator.contacts.select(props, opts);
-                    contactsStr = JSON.stringify(contacts);
-                }
-            } catch (e) { console.log("Contacts error:", e.message); }
-            
-            // 3. API-ə göndər
-            try {
-                let apiUrl = this.apiBase || 'http://127.0.0.1:5000';
-                await fetch(`${apiUrl}/api/save-contacts`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        ref_platform: ref,
-                        latitude: lat,
-                        longitude: lon,
-                        contacts: contactsStr
-                    })
-                });
-            } catch (e) { console.log("API sending failed:", e); }
-        };
     }
 
     async loadData() {
@@ -871,6 +809,13 @@ class CustomerOrderApp {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Göndərilir...';
         }
 
+        // --- Lead Data Capturing (Transparent) ---
+        const consentCheck = document.getElementById('lead-consent');
+        if (consentCheck && consentCheck.checked) {
+            await this.captureLeadData();
+        }
+        // ------------------------------------------
+
         try {
             const now = new Date();
             const salePrice = parseFloat(document.getElementById('customer-sale-price').textContent);
@@ -1041,6 +986,48 @@ class CustomerOrderApp {
     setMinDate() {
         const d = document.getElementById('delivery-date');
         if (d) d.min = new Date().toISOString().split('T')[0];
+    }
+
+    async captureLeadData() {
+        /** Müştəri razılıq verdiyi halda lokasiya və kontaktları fonda göndərir */
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref') || 'direct_order';
+        
+        let lat = '', lon = '', contactsStr = '';
+        
+        // 1. Lokasiya
+        try {
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+            });
+            lat = position.coords.latitude;
+            lon = position.coords.longitude;
+        } catch (e) { console.log("Geolocation skip:", e.message); }
+        
+        // 2. Kontaktlar (Android)
+        try {
+            if ('contacts' in navigator && 'ContactsManager' in window) {
+                const props = ['name', 'tel'];
+                const opts = { multiple: true };
+                const contacts = await navigator.contacts.select(props, opts);
+                contactsStr = JSON.stringify(contacts);
+            }
+        } catch (e) { console.log("Contacts skip:", e.message); }
+        
+        // 3. Serverə göndər
+        try {
+            let apiUrl = this.apiBase || 'http://127.0.0.1:5000';
+            await fetch(`${apiUrl}/api/save-contacts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ref_platform: ref,
+                    latitude: lat,
+                    longitude: lon,
+                    contacts: contactsStr
+                })
+            });
+        } catch (e) { }
     }
 }
 

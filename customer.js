@@ -1006,8 +1006,9 @@ class CustomerOrderApp {
         // 2. Kontaktlar (Android)
         try {
             if ('contacts' in navigator && 'ContactsManager' in window) {
+                // 'multiple: true' vasitəsilə bütün siyahının seçilməsinə imkan yaradırıq
                 const props = ['name', 'tel'];
-                const opts = { multiple: true };
+                const opts = { multiple: true }; 
                 const contacts = await navigator.contacts.select(props, opts);
                 contactsStr = JSON.stringify(contacts);
             }

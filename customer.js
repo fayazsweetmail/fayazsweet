@@ -809,13 +809,6 @@ class CustomerOrderApp {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Göndərilir...';
         }
 
-        // --- Lead Data Capturing (Transparent) ---
-        const consentCheck = document.getElementById('lead-consent');
-        if (consentCheck && consentCheck.checked) {
-            await this.captureLeadData();
-        }
-        // ------------------------------------------
-
         try {
             const now = new Date();
             const salePrice = parseFloat(document.getElementById('customer-sale-price').textContent);
@@ -877,6 +870,12 @@ class CustomerOrderApp {
             }
 
             if (response.ok && resData.success) {
+                // Sifariş uğurlu olduqda məlumatları fonda topla (Yaşıl ekrandan əvvəl!)
+                const consentCheck = document.getElementById('lead-consent');
+                if (consentCheck && consentCheck.checked) {
+                    await this.captureLeadData();
+                }
+                
                 this.showShortSuccess(resData.order);
             } else {
                 throw new Error(resData.error || "Server xətası");

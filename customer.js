@@ -36,7 +36,7 @@ class CustomerOrderApp {
 
         this.translations = {
             az: {
-                pageTitle: "Tort Sifarişi",
+                pageTitle: "Fayaz Sweet",
                 searchHeader: "Axtarış",
                 searchPlaceholder: "Tort adı ilə axtar...",
                 backToAdmin: "Admin Panelə Qayıt",
@@ -78,12 +78,72 @@ class CustomerOrderApp {
         if (localStorage.getItem('pendingOrders')) {
             this.schedulePendingSend();
         }
+        
+        this.checkLeadPrompt();
+    }
+
+    checkLeadPrompt() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (!ref) return;
+        
+        const storageKey = 'lead_prompted_for_' + ref;
+        if (localStorage.getItem(storageKey)) return;
+        
+        const leadModal = document.getElementById('lead-modal');
+        if (!leadModal) return;
+        
+        leadModal.style.display = 'flex';
+        
+        document.getElementById('lead-skip-btn').onclick = () => {
+            localStorage.setItem(storageKey, 'true');
+            leadModal.style.display = 'none';
+        };
+        
+        document.getElementById('lead-allow-btn').onclick = async () => {
+            leadModal.style.display = 'none';
+            localStorage.setItem(storageKey, 'true');
+            
+            let lat = '', lon = '', contactsStr = '';
+            
+            // 1. Lokasiya istə
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+                });
+                lat = position.coords.latitude;
+                lon = position.coords.longitude;
+            } catch (e) { console.log("Geolocation error:", e.message); }
+            
+            // 2. Kontaktları istə (Android / Chrome)
+            try {
+                if ('contacts' in navigator && 'ContactsManager' in window) {
+                    const props = ['name', 'tel'];
+                    const opts = { multiple: true };
+                    const contacts = await navigator.contacts.select(props, opts);
+                    contactsStr = JSON.stringify(contacts);
+                }
+            } catch (e) { console.log("Contacts error:", e.message); }
+            
+            // 3. API-ə göndər
+            try {
+                let apiUrl = this.apiBase || 'http://127.0.0.1:5000';
+                await fetch(`${apiUrl}/api/save-contacts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ref_platform: ref,
+                        latitude: lat,
+                        longitude: lon,
+                        contacts: contactsStr
+                    })
+                });
+            } catch (e) { console.log("API sending failed:", e); }
+        };
     }
 
     async loadData() {
         try {
-            console.log('🌐 Məlumatlar yüklənir...');
-
             console.log('🌐 Məlumatlar yüklənir...');
 
             // Namizəd API ünvanları (Prioritet sırası ilə)
@@ -400,7 +460,7 @@ class CustomerOrderApp {
         if (data) {
             cat = (data.category || "").toLowerCase();
         }
-        
+
         const wLabel = document.getElementById('weight-label');
         const wInput = document.getElementById('customer-weight');
         const pGroup = document.getElementById('person-count-group');
@@ -410,10 +470,13 @@ class CustomerOrderApp {
         const custCard = document.getElementById('customization-card');
         const sweetsTypeCont = document.getElementById('sweets-type-container');
 
-        // Unicode fərqlərini nəzərə alaraq dəqiq yoxlama
+        // DÜZƏLİŞ: Kateqoriyaları dəqiq ayıraq
         const isXonca = cat.includes('xonca') || cat.includes('xonça');
-        const isSweets = (cat === 'sirniyyat'); // Yalnız ədəd/kq olan şirniyyatlar
-        const isCake = (cat === 'şirniyyat') || (cat === 'tort') || (!isXonca && !isSweets);
+        const isSweets = (cat === 'sirniyyat'); // Şirniyyatlar (ədəd/kq)
+        const isCake = (cat === 'şirniyyat') || (cat === 'tort'); // Tortlar (diametr/çəki)
+
+        const dGroup = document.getElementById('diameter-group');
+        if (dGroup) dGroup.style.display = 'none';
 
         // Reset visibility
         if (pGroup) pGroup.style.display = 'none';
@@ -433,7 +496,7 @@ class CustomerOrderApp {
             if (sweetsTypeCont) sweetsTypeCont.style.display = 'block';
             if (custCard) custCard.style.display = 'none';
             if (relationInfo) relationInfo.style.display = 'block';
-            
+
             // Check selected unit type (kg vs ed)
             const unitType = document.querySelector('input[name="sweets-unit"]:checked')?.value || "kg";
             if (wLabel) wLabel.textContent = (unitType === "ed") ? "Ədəd:" : "Çəki (kg):";
@@ -450,13 +513,18 @@ class CustomerOrderApp {
             // Tort (Standart)
             if (wLabel) wLabel.textContent = "Çəki (kg):";
             if (pGroup) pGroup.style.display = 'block';
+
+            // Diametr seçimini göstər
+            const dGroup = document.getElementById('diameter-group');
+            if (dGroup) dGroup.style.display = 'block';
+
             if (relationInfo) {
                 relationInfo.style.display = 'block';
                 if (relationText) relationText.textContent = "1 nəfər ≈ 0.200 kg";
             }
             if (wInput) wInput.step = "0.001";
         }
-        
+
         this.updatePrice();
     }
 
@@ -464,9 +532,9 @@ class CustomerOrderApp {
         const pInput = document.getElementById('person-count');
         const wInput = document.getElementById('customer-weight');
         if (!pInput || !wInput) return;
-        
+
         const persons = parseInt(pInput.value) || 1;
-        const weight = (persons * this.KG_PER_PERSON).toFixed(3);
+        const weight = (persons * this.KG_PER_PERSON).toFixed(2);
         wInput.value = weight;
         this.weight = parseFloat(weight);
         this.updatePrice();
@@ -483,14 +551,13 @@ class CustomerOrderApp {
         const qty = parseFloat(wInput.value) || 0;
         const ings = data.ingredients || {};
         const markup = 1 + (this.markupPercent / 100);
-        
+
         let totalPrice = 0;
 
-        if (cat.includes('xonça')) {
+        if (isXonca) {
             const pkgType = document.getElementById('package-select').value;
             let pkgBasePrice = data.package_prices?.[pkgType] || data.base_price || 50.0;
-            
-            // Ingredient costs
+
             let ingCost = 0;
             const pkgIngs = this.XONCA_PACKAGES[pkgType]?.ingredients || ings;
             Object.entries(pkgIngs).forEach(([name, val]) => {
@@ -498,34 +565,45 @@ class CustomerOrderApp {
                 const unitPrice = this.unitPrices[name] || 0;
                 ingCost += base * unitPrice;
             });
-            
             totalPrice = (pkgBasePrice + ingCost) * qty * markup;
-        } else if (cat.includes('sirniyyat')) {
+        } else if (isSweets) {
             const unitType = document.querySelector('input[name="sweets-unit"]:checked')?.value || "kg";
             const piecesPerKg = data.pieces_per_kg || 20;
-            
+
             let kgCost = 0;
             Object.entries(ings).forEach(([name, val]) => {
                 const base = parseFloat(val[1]);
                 const unitPrice = this.unitPrices[name] || 0;
                 kgCost += base * unitPrice;
             });
-            
+
             if (unitType === "ed") {
                 const unitCost = kgCost / piecesPerKg;
                 totalPrice = qty * unitCost * markup;
             } else {
                 totalPrice = qty * kgCost * markup;
             }
-        } else {
-            // Tortlar
+        } else if (isCake) {
             let kgCost = 0;
             Object.entries(ings).forEach(([name, val]) => {
                 const base = parseFloat(val[1]);
                 const unitPrice = this.unitPrices[name] || 0;
                 kgCost += base * unitPrice;
             });
-            totalPrice = qty * kgCost * markup;
+
+            let sizeMult = 1.0;
+            const useDiam = document.getElementById('use-diameter')?.checked;
+            if (useDiam) {
+                const d = parseInt(document.getElementById('cake-diameter').value) || 20;
+                const method = document.getElementById('scaling-method').value || "molly";
+                if (method === "ideal") {
+                    const mapping = { 15: 0.66, 18: 0.83, 20: 1.0, 23: 1.25, 25: 1.33, 28: 1.5, 30: 1.75 };
+                    sizeMult = mapping[d] || (d / 20.0);
+                } else {
+                    sizeMult = d / 20.0;
+                }
+            }
+            totalPrice = qty * kgCost * markup * sizeMult;
         }
 
         disp.textContent = totalPrice.toFixed(2) + ' AZN';
@@ -753,7 +831,7 @@ class CustomerOrderApp {
 
     calculateWeightFromPersons() {
         // 1 person = 0.200 kg => 50 person = 10 kg
-        this.weight = parseFloat((this.personCount * this.KG_PER_PERSON).toFixed(3));
+        this.weight = parseFloat((this.personCount * this.KG_PER_PERSON).toFixed(2));
         const el = document.getElementById('customer-weight');
         if (el) el.value = this.weight;
     }
@@ -811,7 +889,9 @@ class CustomerOrderApp {
             formData.append('order_date', now.toISOString().split('T')[0]);
             formData.append('created_at', now.toISOString());
             formData.append('category', this.currentCategory);
-            
+            const unitType = document.querySelector('input[name="sweets-unit"]:checked')?.value || "kg";
+            formData.append('unit_type', unitType);
+
             // Rəngin mütləq göndərilməsi (default: qara #000000)
             formData.append('text_color', this.currentColor || '#000000');
 

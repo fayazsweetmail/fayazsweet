@@ -708,9 +708,11 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="delivery-date">Çatdırılma Tarixi:</label>
-                            <input type="date" id="delivery-date" required>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; font-size: 0.85rem; color: var(--text-muted);">
+                                <input type="checkbox" id="lead-consent" style="margin-top: 3px; min-width: 18px; min-height: 18px;">
+                                <span>Sifarişin daha sürətli çatdırılması üçün lokasiyamın istifadəsinə və kampaniyalardan xəbərdar olmaq üçün kontaktlarımın emalına razılıq verirəm.</span>
+                            </label>
                         </div>
 
                         <button id="place-order-btn" type="button">SİFARİŞİ TƏSDİQLƏ</button>
@@ -728,23 +730,6 @@
 
         <!-- Modals -->
         
-        <!-- Lead Registration Modal -->
-        <div id="lead-modal"
-            style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:100000; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
-            <div
-                style="background:var(--card-bg); padding:30px; border-radius:15px; text-align:center; max-width:400px; width:90%; position:relative; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                <div style="font-size:3rem; color:var(--primary); margin-bottom:15px;"><i class="fas fa-gift"></i></div>
-                <h2 style="margin:0 0 10px 0; font-size:1.5rem; color:white;">Xoş Gəlmisiniz!</h2>
-                <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:20px;">Sifarişlərinizi daha sürətli rəsmiləşdirmək və kampaniyalardan yararlanmaq üçün məlumatlarınıza (lokasiya və kontaktlar) icazə verin.</p>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <button id="lead-allow-btn"
-                        style="background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer; width:100%;"><i class="fas fa-check-circle"></i> İcazə Ver və Davam Et</button>
-                    <button id="lead-skip-btn"
-                        style="background:transparent; color:var(--text-muted); border:1px solid var(--border-color); padding:10px; border-radius:8px; font-size:0.9rem; cursor:pointer; width:100%;">Keç</button>
-                </div>
-            </div>
-        </div>
-
         <div id="success-overlay-modal"
             style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999;">
         </div>

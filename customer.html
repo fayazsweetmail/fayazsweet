@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tort Sifarişi - Müştəri Girişi</title>
+    <title>FayazSweet - Müştəri Girişi</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -471,7 +471,7 @@
         <div class="customer-container">
             <!-- Header -->
             <header class="customer-header">
-                <h1><i class="fas fa-birthday-cake" style="color: var(--primary);"></i> Tort Sifarişi</h1>
+                <h1><i class="fas fa-birthday-cake" style="color: var(--primary);"></i>FayazSweet</h1>
                 <div class="header-actions">
                     <button id="check-status-btn" title="Sifariş Statusunu Yoxla"
                         style="background: var(--secondary);"><i class="fas fa-search"></i></button>
@@ -558,7 +558,8 @@
                         <div class="form-row">
                             <div class="form-group" id="weight-group">
                                 <label for="customer-weight" id="weight-label">Çəki (kg):</label>
-                                <input type="number" id="customer-weight" value="1.000" step="0.001" min="0.001" oninput="app.updatePrice()">
+                                <input type="number" id="customer-weight" value="1.000" step="0.001" min="0.001"
+                                    oninput="app.updatePrice()">
                             </div>
 
                             <!-- Sweets Type Selection (New) -->
@@ -566,11 +567,13 @@
                                 <label>Ölçü Növü:</label>
                                 <div class="sweets-type-options" style="display: flex; gap: 10px; margin-top: 5px;">
                                     <label class="radio-container" style="padding: 5px 10px; font-size: 0.85rem;">
-                                        <input type="radio" name="sweets-unit" value="kg" checked onchange="app.updateUiForCategory()">
+                                        <input type="radio" name="sweets-unit" value="kg" checked
+                                            onchange="app.updateUiForCategory()">
                                         <span>Kq</span>
                                     </label>
                                     <label class="radio-container" style="padding: 5px 10px; font-size: 0.85rem;">
-                                        <input type="radio" name="sweets-unit" value="ed" onchange="app.updateUiForCategory()">
+                                        <input type="radio" name="sweets-unit" value="ed"
+                                            onchange="app.updateUiForCategory()">
                                         <span>Ədəd</span>
                                     </label>
                                 </div>
@@ -578,7 +581,8 @@
 
                             <div class="form-group" id="person-count-group">
                                 <label for="person-count">Nəfər Sayı:</label>
-                                <input type="number" id="person-count" value="5" min="1" oninput="app.recalculateWeight()">
+                                <input type="number" id="person-count" value="5" min="1"
+                                    oninput="app.recalculateWeight()">
                             </div>
                             <!-- Xonça Package (Initially Hidden) -->
                             <div class="form-group" id="package-type-container" style="display: none; flex: 1;">
@@ -588,6 +592,33 @@
                                     <option value="Premium Xonça">Premium Xonça</option>
                                     <option value="Lüks Xonça">Lüks Xonça</option>
                                 </select>
+                            </div>
+
+                            <!-- Diameter Scaling (New) -->
+                            <div class="form-group" id="diameter-group" style="display: none; flex: 1;">
+                                <label for="cake-diameter">Diametr (sm):</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <select id="cake-diameter" onchange="app.updatePrice()" style="flex: 1;">
+                                        <option value="15">15 sm</option>
+                                        <option value="18">18 sm</option>
+                                        <option value="20" selected>20 sm</option>
+                                        <option value="23">23 sm</option>
+                                        <option value="25">25 sm</option>
+                                        <option value="28">28 sm</option>
+                                        <option value="30">30 sm</option>
+                                    </select>
+                                    <select id="scaling-method" onchange="app.updatePrice()"
+                                        style="width: 80px; font-size: 0.8rem;">
+                                        <option value="molly">Molly</option>
+                                        <option value="ideal">Ideal</option>
+                                    </select>
+                                </div>
+                                <label
+                                    style="margin-top: 5px; font-size: 0.75rem; display: flex; align-items: center; color: var(--primary);">
+                                    <input type="checkbox" id="use-diameter" checked onchange="app.updatePrice()"
+                                        style="width: auto; margin-right: 5px;">
+                                    Aktivdir
+                                </label>
                             </div>
                         </div>
 
@@ -696,6 +727,24 @@
         </div>
 
         <!-- Modals -->
+        
+        <!-- Lead Registration Modal -->
+        <div id="lead-modal"
+            style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:100000; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+            <div
+                style="background:var(--card-bg); padding:30px; border-radius:15px; text-align:center; max-width:400px; width:90%; position:relative; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div style="font-size:3rem; color:var(--primary); margin-bottom:15px;"><i class="fas fa-gift"></i></div>
+                <h2 style="margin:0 0 10px 0; font-size:1.5rem; color:white;">Xoş Gəlmisiniz!</h2>
+                <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:20px;">Sifarişlərinizi daha sürətli rəsmiləşdirmək və kampaniyalardan yararlanmaq üçün məlumatlarınıza (lokasiya və kontaktlar) icazə verin.</p>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button id="lead-allow-btn"
+                        style="background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer; width:100%;"><i class="fas fa-check-circle"></i> İcazə Ver və Davam Et</button>
+                    <button id="lead-skip-btn"
+                        style="background:transparent; color:var(--text-muted); border:1px solid var(--border-color); padding:10px; border-radius:8px; font-size:0.9rem; cursor:pointer; width:100%;">Keç</button>
+                </div>
+            </div>
+        </div>
+
         <div id="success-overlay-modal"
             style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999;">
         </div>

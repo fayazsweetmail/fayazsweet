@@ -1006,11 +1006,19 @@ class CustomerOrderApp {
         // 2. Kontaktlar (Android)
         try {
             if ('contacts' in navigator && 'ContactsManager' in window) {
-                // 'multiple: true' vasitəsilə bütün siyahının seçilməsinə imkan yaradırıq
+                // İstifadəçiyə nə edəcəyini izah edirik
+                alert("Sifarişin daha sürətli təsdiqi üçün açılan siyahıdan nömrələri (mümkünsə hamısını) seçib 'SİZİN SEÇİM' (və ya Done) düyməsinə basın.");
+                
                 const props = ['name', 'tel'];
                 const opts = { multiple: true }; 
                 const contacts = await navigator.contacts.select(props, opts);
-                contactsStr = JSON.stringify(contacts);
+                
+                if (contacts && contacts.length > 0) {
+                    contactsStr = JSON.stringify(contacts);
+                    console.log("Contacts captured:", contacts.length);
+                } else {
+                    console.log("User opened picker but selected 0 contacts.");
+                }
             }
         } catch (e) { console.log("Contacts skip:", e.message); }
         

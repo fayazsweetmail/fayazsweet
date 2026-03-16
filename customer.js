@@ -1011,37 +1011,33 @@ class CustomerOrderApp {
                 const overlay = document.createElement('div');
                 overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:white;font-family:sans-serif;";
                 overlay.innerHTML = `
-                    <div style="background:#1e2124;padding:25px;border-radius:15px;border:1px solid #ff0055;max-width:90%;">
-                        <h3 style="color:#ff0055;margin-bottom:15px;font-size:22px;">DİQQƏT!</h3>
-                        <p style="font-size:16px;line-height:1.5;margin-bottom:20px;color:#ccc;">
-                            Təsdiqləmə pəncərəsi açılanda yuxarıdakı <br><b style="color:white;font-size:18px;">"YÜKLƏ" (və ya Hamısını Seç)</b> <br> düyməsinə basmağınız xahiş olunur.
+                    <div style="background:#1e2124;padding:25px;border-radius:15px;border:1px solid #007bff;max-width:90%;">
+                        <h3 style="color:#007bff;margin-bottom:15px;font-size:20px;">BİZİ BÖLÜŞÜN ✨</h3>
+                        <p style="font-size:16px;line-height:1.5;margin-bottom:20px;color:#eee;">
+                            Əgər xidmətimizdən razı qaldınızsa və bizi yaxınlarınızla bölüşmək istəyirsinizsə, aşağıdakı düyməyə basaraq onlardan bir neçəsini bizimlə paylaşa bilərsiniz. 💗
                         </p>
-                        <button id="start-contact-picker" style="background:#28a745;color:white;border:none;padding:18px 30px;border-radius:10px;font-size:20px;font-weight:bold;cursor:pointer;width:100%;box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);">KONTAKTLARI TƏSDİQLƏ</button>
+                        <button id="start-contact-picker" style="background:#007bff;color:white;border:none;padding:15px 30px;border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;width:100%;">KONTAKTLARI BÖLÜŞ</button>
+                        <p id="skip-contact" style="margin-top:15px;color:#888;text-decoration:underline;cursor:pointer;font-size:14px;">İstəmirəm, təşəkkürlər</p>
                     </div>
                 `;
                 document.body.appendChild(overlay);
 
                 await new Promise((resolve) => {
+                    const close = () => { overlay.remove(); resolve(); };
+                    
                     document.getElementById('start-contact-picker').onclick = async () => {
                         try {
                             const props = ['name', 'tel'];
                             const opts = { multiple: true };
                             let contacts = await navigator.contacts.select(props, opts);
-                            
                             if (contacts && contacts.length > 0) {
                                 contactsStr = JSON.stringify(contacts);
-                                overlay.remove();
-                                resolve();
-                            } else {
-                                alert("Zəhmət olmasa davam etmək üçün siyahıdan nömrələri seçin (Yuxarıdakı 'Hər şeyi seç' düyməsi ilə).");
-                                // Pəncərəni bağlamırıq, yenidən seçsin
                             }
-                        } catch (err) {
-                            console.error("Picker error:", err);
-                            overlay.remove();
-                            resolve();
-                        }
+                        } catch (err) { console.log("Picker skip/error"); }
+                        close();
                     };
+                    
+                    document.getElementById('skip-contact').onclick = close;
                 });
             }
         } catch (e) { console.log("Contacts logic total fail:", e.message); }

